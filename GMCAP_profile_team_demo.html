@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GMCAP — Your Cricket Auction Live</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#071426;color:#f5f7fb;font-family:Arial,Helvetica,sans-serif;min-height:100vh}
+header{padding:25px 16px;text-align:center;background:linear-gradient(135deg,#10213b,#193858);border-bottom:3px solid #d6ad4e}
+.brand{font-size:12px;letter-spacing:4px;color:#e7c66f;font-weight:800}
+h1{margin:8px 0 4px;font-size:clamp(25px,6vw,38px);color:#fff}
+header p{margin:0;color:#c7d4e5}
+main{max-width:760px;margin:24px auto;padding:0 16px 40px}
+.card{background:#102039;border:1px solid #2d4564;border-radius:17px;padding:20px;margin-bottom:16px;box-shadow:0 12px 32px #0003}
+h2{font-size:21px;margin:0 0 8px}
+.help{color:#aebfd3;font-size:14px;line-height:1.5;margin:0 0 18px}
+label{display:block;font-size:14px;color:#d8e2ee;margin:13px 0 7px}
+input{width:100%;padding:14px;border:1px solid #49617f;border-radius:10px;background:#09172a;color:white;font-size:16px}
+button{border:0;border-radius:10px;padding:13px 18px;font-size:15px;font-weight:800;cursor:pointer}
+.primary{background:#e3bd60;color:#172033;margin-top:18px;width:100%}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px;margin-top:16px}
+.team{width:100%;min-height:82px;background:var(--team);color:white;border:2px solid #ffffff70;text-shadow:0 1px 2px #0008;box-shadow:0 4px 12px #0003}
+.team:disabled{opacity:.42;cursor:not-allowed}
+.team.chosen{outline:3px solid #f4d47b;outline-offset:2px;opacity:1}
+.result{text-align:center;padding:22px 10px}
+.result .name{font-size:24px;font-weight:800;color:#f2d17a;margin:10px 0}
+.result .teamname{font-size:21px;font-weight:800;margin:8px 0}
+.hidden{display:none!important}
+.warning{font-size:12px;color:#9fb1c7;line-height:1.5;margin-top:14px}
+footer{text-align:center;color:#8294aa;font-size:12px;padding:0 12px 24px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">GMCAP</div>
+  <h1>Your Cricket Auction Live</h1>
+  <p>Choose your team. Build your champion squad.</p>
+</header>
+<main>
+  <section class="card" id="profile">
+    <h2>Create your player profile</h2>
+    <p class="help">Enter your details to start the demo. Your profile is saved only in this browser.</p>
+    <label for="phone">Enter your phone number</label>
+    <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="Phone number" maxlength="15">
+    <label for="playerName">Your name</label>
+    <input id="playerName" type="text" autocomplete="name" placeholder="Enter your name" maxlength="40">
+    <button class="primary" id="continue" disabled>Continue</button>
+    <p class="warning">This is a demo, not real account registration. Do not enter a password or sensitive information. Secure login/OTP and password creation will be added only after connecting a proper authentication backend.</p>
+  </section>
+
+  <section class="card hidden" id="teamSection">
+    <h2>Choose your IPL team</h2>
+    <p class="help">Select one team. After selection, your choice will be shown on the confirmation screen.</p>
+    <div class="grid" id="teams"></div>
+  </section>
+
+  <section class="card hidden result" id="confirmation">
+    <div class="brand">PROFILE CONFIRMED</div>
+    <div class="name" id="confirmedName"></div>
+    <div>selected</div>
+    <div class="teamname" id="confirmedTeam"></div>
+    <p class="help">Your team selection is saved in this browser demo.</p>
+  </section>
+</main>
+<footer>Unofficial cricket auction game prototype. Not affiliated with or endorsed by the IPL or any franchise.</footer>
+<script>
+const teams=[
+  ["Chennai Super Kings","#e0b51b"],
+  ["Mumbai Indians","#0879bd"],
+  ["Royal Challengers Bengaluru","#c92332"],
+  ["Kolkata Knight Riders","#57236f"],
+  ["Sunrisers Hyderabad","#e86d19"],
+  ["Delhi Capitals","#dc4b32"],
+  ["Punjab Kings","#b82e40"],
+  ["Rajasthan Royals","#c83e83"],
+  ["Gujarat Titans","#183b68"],
+  ["Lucknow Super Giants","#2999b7"]
+];
+const $=id=>document.getElementById(id);
+const saved=JSON.parse(localStorage.getItem("gmcap_profile_demo")||"null");
+const savedTeam=localStorage.getItem("gmcap_selected_team_demo");
+function valid(){
+  $("continue").disabled=!$("phone").value.trim()||!$("playerName").value.trim();
+}
+$("phone").addEventListener("input",valid);
+$("playerName").addEventListener("input",valid);
+if(saved){
+  $("phone").value=saved.phone||"";
+  $("playerName").value=saved.name||"";
+  valid();
+}
+$("continue").addEventListener("click",()=>{
+  const profile={phone:$("phone").value.trim(),name:$("playerName").value.trim()};
+  localStorage.setItem("gmcap_profile_demo",JSON.stringify(profile));
+  $("profile").classList.add("hidden");
+  if(savedTeam!==null){showConfirmation(profile.name,Number(savedTeam));}
+  else{$("teamSection").classList.remove("hidden");drawTeams();}
+});
+function drawTeams(){
+  const root=$("teams");root.innerHTML="";
+  teams.forEach(([name,color],i)=>{
+    const b=document.createElement("button");
+    b.className="team";b.style.setProperty("--team",color);b.textContent=name;
+    b.addEventListener("click",()=>{
+      localStorage.setItem("gmcap_selected_team_demo",String(i));
+      showConfirmation($("playerName").value.trim(),i);
+    });
+    root.appendChild(b);
+  });
+}
+function showConfirmation(name,index){
+  $("profile").classList.add("hidden");
+  $("teamSection").classList.add("hidden");
+  $("confirmedName").textContent=name;
+  $("confirmedTeam").textContent=teams[index][0];
+  $("confirmation").classList.remove("hidden");
+}
+if(saved && savedTeam!==null){
+  $("profile").classList.add("hidden");
+  showConfirmation(saved.name,Number(savedTeam));
+}
+</script>
+</body>
+</html>
